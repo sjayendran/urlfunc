@@ -1,45 +1,59 @@
 var groovly = angular.module('groovly.directives', [] );
 
 //main method that loads the current song based on player controls or direct selection of the song
-function setShare($scope, currentShare) {
-  $scope.$parent.$parent.currentChosenShare = currentShare;
-  if($scope.$parent.history == [] || $scope.$parent.history == null || $scope.$parent.history == undefined || $scope.$parent.history == "")// not played anything yet in random mode
+function setShare(currentShare, SongState) {
+  //$scope.$parent.$parent.currentChosenShare = currentShare;
+  SongState.setCS(currentShare);
+  //if($scope.$parent.history == [] || $scope.$parent.history == null || $scope.$parent.history == undefined || $scope.$parent.history == "")// not played anything yet in random mode
+  if(SongState.isHistoryEmpty())
   {
     mixpanel.track("started play history");
-    $scope.$parent.history = [];
-    $scope.$parent.history.push(currentShare);
-    $scope.$parent.currentHistoryIndex = $scope.$parent.history.length - 1;
-    $scope.$parent.currentID = currentShare._id.substring(currentShare._id.indexOf("v=")+2)
-    console.log('BLANK: this is the current history length: ' + $scope.$parent.history.length);
-    console.log('BLANK: this is the current history index: '+ $scope.$parent.currentHistoryIndex);
+    /*$scope.$parent.history = [];
+    $scope.$parent.history.push(currentShare);*/
+    SongState.initializeHistory();    
+    SongState.pushToHistory(currentShare);
+    SongState.setCurrentHistoryIndex(SongState.getHistoryLength() - 1);
+    //$scope.$parent.currentHistoryIndex = $scope.$parent.history.length - 1;
+    //$scope.$parent.currentID = currentShare._id.substring(currentShare._id.indexOf("v=")+2) //currentID is set directly in set current share
+    console.log('BLANK: this is the current history length: ' + SongState.getHistoryLength());
+    console.log('BLANK: this is the current history index: '+ SongState.getCurrentHistoryIndex());
     //alert('this is what is inside the current chosen share scope now: ' + $scope.$parent.allShares.$parent.currentChosenShare.link);
   }
   else
   { 
-    $scope.$parent.currentHistoryIndex = $scope.$parent.history.indexOf(currentShare);
-    if($scope.$parent.history.indexOf(currentShare) == -1)
+    //$scope.$parent.currentHistoryIndex = $scope.$parent.history.indexOf(currentShare);
+    //SongState.setCurrentHistoryIndexToIndexOfThisSong(currentShare);
+    //if($scope.$parent.history.indexOf(currentShare) == -1)
+    if(!SongState.songExistsInHistory()) //if song doesn't exist in history
     {
-      $scope.$parent.history.push(currentShare);
-      $scope.$parent.currentHistoryIndex = $scope.$parent.history.indexOf(currentShare);
+      //$scope.$parent.history.push(currentShare);
+      //$scope.$parent.currentHistoryIndex = $scope.$parent.history.indexOf(currentShare);
+      SongState.pushToHistory(currentShare);      
+      
     }
-    console.log('NOT BLANK: this is the current history length: ' + $scope.$parent.history.length);
-    console.log('NOT BLANK: this is the current history index: '+ $scope.$parent.currentHistoryIndex);
-    $scope.$parent.currentID = currentShare._id.substring(currentShare._id.indexOf("v=")+2);
+    SongState.setCurrentHistoryIndexToIndexOfThisSong(currentShare);
+    
+    console.log('NOT BLANK: this is the current history length: ' + SongState.getHistoryLength());
+    console.log('NOT BLANK: this is the current history index: '+ SongState.getCurrentHistoryIndex());
+    console.log('and this is the history so far: ');
+    console.log(SongState.getHistory());
+    //$scope.$parent.currentID = currentShare._id.substring(currentShare._id.indexOf("v=")+2);
   }
-  loadVideoById($scope.$parent.currentID);
-};
+  //loadVideoById($scope.$parent.currentID);
+  loadVideoById(SongState.getCurrentID());
+}
 
 //Change the class of the selected song in the list with the highlighted CSS and remove the non-selected song's CSS
 function selectShareInList(el) 
 {
   angular.element(document.querySelector('.selected')).removeClass("selected");
   el.addClass("selected");
-  console.log(Object.keys(el)[0]);
+  //console.log(Object.keys(el)[0]);
 }
 
 function startPlayer() 
 {
-  console.log('inside start player method!');
+  //console.log('inside start player method!');
   var nextBtn = angular.element(document.querySelector('.glyphicon-step-forward'));
   nextBtn.click();
 }
@@ -62,7 +76,7 @@ groovly.directive( 'shareSelected', function () {
   };
 });
 
-groovly.directive('shareobject', function() {
+groovly.directive('shareobject', ['SongState', function(SongState) {
 	return {
 		require: 'shareobject',
 		restrict: "E",
@@ -74,9 +88,10 @@ groovly.directive('shareobject', function() {
 		controller: function($scope) {
         //var panes = $scope.panes = [];
          this.setCurrentShare = function(currentShare) {
-           setShare($scope, currentShare);
-           $scope.$parent.$parent.currentChosenShare.listenCount += 1;
-           angular.element($('#personalVidList')).scope().updateListen($scope.$parent.currentID,$scope.$parent.$parent.currentChosenShare.listenCount);
+           setShare(currentShare, SongState);
+      	   SongState.incrementListenCount();
+           //$scope.$parent.$parent.currentChosenShare.listenCount += 1;
+           //angular.element($('#personalVidList')).scope().updateListen($scope.$parent.currentID,$scope.$parent.$parent.currentChosenShare.listenCount);
         };
 		  },
 		  link: function(scope, element, attrs, controller) {
@@ -86,9 +101,9 @@ groovly.directive('shareobject', function() {
         });  
 		  }
 	};
-});
+}]);
 
-groovly.directive('playercontrols', function() {
+groovly.directive('playercontrols',['SongState', function(SongState) {
 	return {
    require: "playercontrols",
 	 restrict : 'E',
@@ -100,105 +115,122 @@ groovly.directive('playercontrols', function() {
 				"  <div id='progBar' class='progress-bar' aria-valuenow='60' aria-valuemin='0' aria-valuemax='100' style='width: 0%;'></div>" +
         "</div></a></li><li><img class='navbar-header' id='songLoader' style='visibility:hidden; padding: 18px 0px 0px 0px;' src='img/loaders/circle.gif' width='16px'></li></ul>",
    controller: function($scope) {     
-        this.selectNewRandomSongAndPush = function(scope) {
-          //var streamLength = $scope.allShares.shares.length-1;
-          var randomChoice = Math.floor(Math.random()*scope.shares.length-1);
+      this.selectNewRandomSongAndPush = function() {//scope) {
+          
+          //var randomChoice = Math.floor(Math.random()*scope.shares.length-1);
+      	  var randomChoice = Math.floor(Math.random()*SongState.getSongsLength('me') - 1);
           var adjustedListPosition = randomChoice + 2;
           console.log('inside new random song and push method');
           
-          while(_.contains(scope.history, scope.shares[randomChoice]) && scope.history.length <= scope.shares.length)
+          //while(_.contains(scope.history, scope.shares[randomChoice]) && scope.history.length <= scope.shares.length)
+      	  while(_.contains(SongState.getHistory(), SongState.getSongAtIndex('me',randomChoice)) && SongState.getHistoryLength() <= SongState.getSongsLength('me'))
           {
-            randomChoice = Math.floor(Math.random()*scope.shares.length-1);
+            //randomChoice = Math.floor(Math.random()*scope.shares.length-1);
+      		randomChoice = Math.floor(Math.random()*SongState.getSongsLength('me') - 1);
           }
           
-          if(!_.contains(scope.history, scope.shares[randomChoice]))
+          //if(!_.contains(scope.history, scope.shares[randomChoice]))
+          if(!_.contains(SongState.getHistory(), SongState.getSongAtIndex('me',randomChoice)))
           {
-            this.selectShareFromControls(scope.shares[randomChoice],scope.shares);
-            //angular.element(document.querySelector('ul li.shareBrowserItem:nth-child('+adjustedListPosition+') a')).click();
-            //this.setCurrentShare(scope.shares[randomChoice]);
+            //this.selectShareFromControls(scope.shares[randomChoice],scope.shares);
+            //console.log('selecting this random song'+ SongState.getSongAtIndex('me',randomChoice).st);
+            this.selectShareFromControls(SongState.getSongAtIndex('me',randomChoice),SongState.getSongs('me'));
           }          
         };
      
         this.nextSong = function() {
-          var reachedEndOfStream = false;
-          var scope = angular.element(personalVidList).scope();
-          scope.lastAction = 'next';
-        
+          SongState.reachedEndOfStream(false);
+          //var scope = angular.element(personalVidList).scope();
+          //scope.lastAction = 'next';
+          SongState.setLastActionAsNext();
+          
           //console.log("this is the randomSoFar size:"+randomSoFar.length);
           //console.log("this is the randomObject size:"+randomObjects.length);
-        
-          if(scope.history == undefined)
+          
+          //if(scope.history == undefined)
+          if(SongState.isHistoryEmpty())
           {
-            reachedEndOfStream = false;
+            SongState.reachedEndOfStream(false);
           }
           else
           {
-            if(scope.history.length < scope.shares.length-1)
-              reachedEndOfStream = false;
+            //if(scope.history.length < scope.shares.length-1)
+            if(SongState.getHistoryLength() < SongState.getSongsLength('me')-1)
+              SongState.reachedEndOfStream(false);
             else
-              reachedEndOfStream = true;
+              SongState.reachedEndOfStream(true);
           }
-        
+          
           //console.log("randomSoFar is: "+ randomSoFar);
-          if(scope.history == [] || scope.history == null || scope.history == undefined || scope.history == "")// not played anything yet in random mode
+          //if(scope.history == [] || scope.history == null || scope.history == undefined || scope.history == "")// not played anything yet in random mode
+  		  if(SongState.isHistoryEmpty())// not played anything yet in random mode
           {
             console.log("nothing in here so pushing the first random choice i got");
-            scope.history = [];
-            this.selectNewRandomSongAndPush(scope);
+            //scope.history = [];
+            SongState.initializeHistory();
+            //this.selectNewRandomSongAndPush(scope);
+            this.selectNewRandomSongAndPush();
           }
           else // if tracks have already been played in random mode then check if link exists in linklist
           {
-            if(scope.currentHistoryIndex == scope.history.length-1) //it is at the end of the random linklist, then add the next choice
+            //if(scope.currentHistoryIndex == scope.history.length-1) 
+            if(SongState.atEndOfHistory())//it is at the end of the random linklist, then add the next choice
             {
               console.log("at the end of linklist getting new random choice");
-              this.selectNewRandomSongAndPush(scope);
+              //this.selectNewRandomSongAndPush(scope);
+              this.selectNewRandomSongAndPush();
             }			
             else //if not at the end of the linklist then just move to the next one
             {
               mixpanel.track("next song in history");
-              scope.currentHistoryIndex += 1;
+              //scope.currentHistoryIndex += 1;
+              SongState.setCurrentHistoryIndex(SongState.getCurrentHistoryIndex() + 1);
               //this.setCurrentShare(scope.shares.history[scope.shares.currentHistoryIndex]);
-              this.selectShareFromControls(scope.history[scope.currentHistoryIndex],scope.shares);
+              //this.selectShareFromControls(scope.history[scope.currentHistoryIndex],scope.shares);
+              this.selectShareFromControls(SongState.getHistory()[SongState.getCurrentHistoryIndex()],SongState.getSongs('me'));
             }		
           }
         };
      
         this.previousSong = function() {
-          var reachedEndOfStream = false;
-          var scope = angular.element(personalVidList).scope();
+          SongState.reachedEndOfStream(false);
+          //var scope = angular.element(personalVidList).scope();
           //console.log('this is the id of the scope: '+ scope.$id);
           //console.log('in the prev button method! this is the object keys of the scope: ');
           //console.log(scope);
           //console.log('this is the current chosen share:'+scope.$parent.currentChosenShare);
           //console.log('this is the current history index:'+scope.currentHistoryIndex);
-          scope.lastAction = 'previous';
-          if(scope.currentHistoryIndex > 0)
+          //scope.lastAction = 'previous';
+          SongState.setLastActionAsPrevious();
+          if(SongState.getCurrentHistoryIndex() > 0)
           {
-            scope.currentHistoryIndex--;            
+            SongState.setCurrentHistoryIndex(SongState.getCurrentHistoryIndex() - 1);   
             
-            if(scope.history == undefined)
+            //if(scope.history == undefined)
+            if(SongState.isHistoryEmpty())
             {
-              reachedEndOfStream = false;
+              SongState.reachedEndOfStream(false);
             }
             else
             {
-              if(scope.history.length < scope.shares.length-1)
-                reachedEndOfStream = false;
+              //if(scope.history.length < scope.shares.length-1)
+              if(SongState.getHistoryLength() < SongState.getSongsLength('me')-1)
+                SongState.reachedEndOfStream(false);
               else
-                reachedEndOfStream = true;
+                SongState.reachedEndOfStream(true);
             }
             //console.log('this is the scope now: ');
             //console.log(scope);
             //console.log('this is the shares: '+ scope.shares);
             //console.log('this is the history: '+ scope.history);
             //console.log('finished init; this is the current history index:'+scope.currentHistoryIndex);
-            if(scope.currentHistoryIndex >= 0)
+            if(SongState.getCurrentHistoryIndex() >= 0)
             {
               console.log('history hasnt reached beginning');
-              this.selectShareFromControls(scope.history[scope.currentHistoryIndex],scope.shares);  
+              //this.selectShareFromControls(scope.history[scope.currentHistoryIndex],scope.shares);  
+              this.selectShareFromControls(SongState.getHistory()[SongState.getCurrentHistoryIndex()],SongState.getSongs('me'));
             }
-          }
-          
+          }          
           mixpanel.track("click previous song");
         };
      
@@ -229,4 +261,4 @@ groovly.directive('playercontrols', function() {
 	   });  
 	 }
 	};
-});
+}]);

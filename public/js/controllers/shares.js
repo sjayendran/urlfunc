@@ -1,4 +1,4 @@
-angular.module('groovly.shares').controller('SharesController', ['$scope', '$routeParams', '$location', '$http', 'Global', 'Shares', function ($scope, $routeParams, $location, $http, Global, Shares) {
+angular.module('groovly.shares').controller('SharesController', ['$scope', '$routeParams', '$location', '$http', 'Global', 'Shares', 'SongState', function ($scope, $routeParams, $location, $http, Global, Shares, SongState) {
     $scope.global = Global;
     $scope.isCollapsed = false;
     //console.log('this is the angular current share scope: '+Object.keysangular.element(currentShare).scope());
@@ -30,10 +30,12 @@ angular.module('groovly.shares').controller('SharesController', ['$scope', '$rou
         Shares.query(query, function (shares) {
           console.log('this is the query used in the SHARE FIND method: '+ query);
           $scope.shares = shares;
+          SongState.updateMySongs(shares);
           //console.log('this is what i got: '+ shares);
         });
       };
       
+      /*
       $scope.updateListen = function(currentID,currentCount) {
           //alert("GOING TO UPDATE THE Listen count for: "+ currentID);
           
@@ -47,7 +49,7 @@ angular.module('groovly.shares').controller('SharesController', ['$scope', '$rou
             error(function(data, status) {
               //console.log('ERROR!!!!!! this is the status: ' + status + ' and this is the data: ' + data);
           });
-      };
+      };*/
       
       //method to update the auto error count for a video
       $scope.updateAEC = function(currentID,currentCount) {

@@ -6,7 +6,8 @@ module.exports = {
     facebook: {
         clientID: "140246246143957",
         clientSecret: "50db7c9bc459749f00ee92e53b8e5624",
-        callbackURL: "http://freshstart-49501.apse1.actionbox.io/auth/facebook/callback"
+        //callbackURL: "http://freshstart-49501.apse1.actionbox.io/auth/facebook/callback",
+      	callbackURL: "http://skullncode.kd.io:3000/auth/facebook/callback"      
     },
     twitter: {
         clientID: "CONSUMER_KEY",

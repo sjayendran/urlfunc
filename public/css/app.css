@@ -58,7 +58,9 @@ ul.horizontal-slide li[class*="span"] {
   height: 350px;
 }
 
-body { padding-top: 70px; }
+body { 
+  padding-top: 70px;
+}
 
 #personalList {
   width: 380px;

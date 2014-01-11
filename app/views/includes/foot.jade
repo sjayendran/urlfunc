@@ -26,7 +26,7 @@ script(type='text/javascript', src='/lib/angular-route/angular-route.min.js')
 //Angular UI
 script(type='text/javascript', src='/lib/angular-bootstrap/ui-bootstrap.js')
 script(type='text/javascript', src='/lib/angular-bootstrap/ui-bootstrap-tpls.js')
-script(type='text/javascript', src='/lib/angular-ui-utils/modules/route/route.js')
+//script(type='text/javascript', src='/lib/angular-ui-utils/modules/route/route.js')
 
 //Application Init
 script(type='text/javascript', src='/js/app.js')
@@ -38,31 +38,20 @@ script(type='text/javascript', src='/js/filters.js')
 script(type='text/javascript', src='/js/services/global.js')
 script(type='text/javascript', src='/js/services/articles.js')
 script(type='text/javascript', src='/js/services/shares.js')
+script(type='text/javascript', src='/js/services/songstate.js')
 
 //Application Controllers
-script(type='text/javascript', src='/js/controllers/articles.js')
 script(type='text/javascript', src='/js/controllers/shares.js')
 script(type='text/javascript', src='/js/controllers/index.js')
-script(type='text/javascript', src='/js/controllers/header.js')	
-script(type='text/javascript', src='/js/controllers/songs.js')
+script(type='text/javascript', src='/js/controllers/header.js')
 script(type='text/javascript', src='/js/init.js')
 
 //App Custom
 //script(type='text/javascript', src='/lib/ytInteraction.js')
-script(type='text/javascript', src='/lib/swfobject.js')
-//script(type='text/javascript', src='/lib/ytObjInteraction.js')
+//script(type='text/javascript', src='/lib/swfobject.js')
+script(type='text/javascript', src='/lib/ytObjInteraction.js')
 
-script(type='text/javascript', src='https://ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
-script
-    WebFont.load({
-        google: {
-          families: ["Montserrat:400,700", "Varela Round:400"]
-        }
-      });
+//script(type='text/javascript', src='https://ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
 
 script(src='https://www.youtube.com/iframe_api')
 script(type='text/javascript', src='/lib/ytObjInteraction.js')
-
-if (process.env.NODE_ENV == 'development')
-    //Livereload script rendered 
-    script(type='text/javascript', src='http://localhost:35729/livereload.js')	
