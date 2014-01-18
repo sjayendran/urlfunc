@@ -49,7 +49,7 @@ angular.module('groovly.shares').controller('SharesController', ['$scope', '$rou
             error(function(data, status) {
               //console.log('ERROR!!!!!! this is the status: ' + status + ' and this is the data: ' + data);
           });
-      };*/
+      };
       
       //method to update the auto error count for a video
       $scope.updateAEC = function(currentID,currentCount) {
@@ -65,7 +65,7 @@ angular.module('groovly.shares').controller('SharesController', ['$scope', '$rou
             error(function(data, status) {
               //console.log('ERROR!!!!!! this is the status: ' + status + ' and this is the data: ' + data);
           });
-      };
+      };*/
     
       $scope.getFB = function() {
         //console.log('this is what the share is: '+ $scope.global.share);

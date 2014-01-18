@@ -70,7 +70,7 @@ function onPlayerStateChange(event) {
       nextBtn.click();
 	}
   else if(event.data === -1 || event.data === 3) { //if buffering show loader 
-    console.log(loader);
+    //console.log(loader);
     loader.css("visibility","visible");
   }
   else if(event.data === 1) { //if playing hide loader
@@ -79,25 +79,35 @@ function onPlayerStateChange(event) {
 }
 
 function onPlayerError(errorCode) {
+  var ss = angular.element(document).injector().get('SongState');
   mixpanel.track("auto error");
-	console.log('ERROR CODE IS: ');
+  console.log('ERROR CODE IS: ');
   console.log(errorCode);  
   var scope = angular.element($('#personalVidList')).scope()
-  console.log('!!!!ERRONEOUS SHARE is: '+ scope.history[scope.currentHistoryIndex]._id);
-  console.log('aeCount is: '+scope.$parent.currentChosenShare.aeCount);
-  scope.$parent.currentChosenShare.aeCount += 1;
-  console.log('and after this error aeCount is: '+ scope.$parent.currentChosenShare.aeCount);
-  angular.element($('#personalVidList')).scope().updateAEC(scope.currentID,scope.$parent.currentChosenShare.aeCount);
-	if(scope.lastAction == "next") // continue in the next direction if bad video found
-	{
-		var nextBtn = angular.element(document.querySelector('.glyphicon-step-forward'));
-		nextBtn.click();
-	}
-	else if(scope.lastAction == "previous") // continue in the previous direction if bad video found
-	{
-		var prevBtn = angular.element(document.querySelector('.glyphicon-step-backward'));
-		prevBtn.click();
-	}
+  console.log('!!!!ERRONEOUS SHARE is: '+ss.getCurrentID());
+  console.log('aeCount is: '+ss.getCS().aeCount);
+  ss.updateAEC();
+  //angular.element($('#personalVidList')).scope().updateAEC(scope.currentID,scope.$parent.currentChosenShare.aeCount);
+  if(ss.getLastAction() == "next") // continue in the next direction if bad video found
+  {
+    var nextBtn = angular.element(document.querySelector('.glyphicon-step-forward'));
+    nextBtn.click();
+  }
+  else if(ss.getLastAction() == "previous") // continue in the previous direction if bad video found
+  {
+    if(ss.getCurrentHistoryIndex() > 0) // if erroneous video at the beginning of the history then move forward
+    {
+      var prevBtn = angular.element(document.querySelector('.glyphicon-step-backward'));
+      prevBtn.click();
+    }
+    else
+    {
+      console.log('erroneous video was the FIRST VIDEO!!!!');
+	  var nextBtn = angular.element(document.querySelector('.glyphicon-step-forward'));
+      nextBtn.click();      
+    }      
+  }
+  ss = null;
 }
 
 function stopVideo() {

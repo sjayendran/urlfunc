@@ -8,7 +8,7 @@ angular.module('groovly.songstate').factory("SongState", ['$http',
    var currentHistoryIndex = 0;
    var currentSong;
    var currentID;
-   var lastAction;
+   var lastAction = 'next';
    var reachedEndOfStream = false;
    
    //Song State Methods
@@ -134,12 +134,31 @@ angular.module('groovly.songstate').factory("SongState", ['$http',
      });
    };
    
+   //method to update the auto error count for a video
+   var updateAEC = function() {
+     currentSong.aeCount += 1;
+     $http({method: 'PUT', url: '/aec/' + currentID + '/yt/' + currentSong.aeCount}).
+       success(function(data, status) {
+         if(status == 200)
+           console.log('this is the successful data: '+ data);
+         else
+           console.log('this is the non-200 data: ' + data);
+       }).
+       error(function(data, status) {
+         //console.log('ERROR!!!!!! this is the status: ' + status + ' and this is the data: ' + data);
+     });
+   };
+   
    var setLastActionAsNext = function() {
    		lastAction = 'next'; 
    };
    
    var setLastActionAsPrevious = function() {
    		lastAction = 'previous'; 
+   };
+   
+   var getLastAction = function() {
+     	return lastAction;
    };
    
    var reachedEndOfStream = function(state) {
@@ -165,8 +184,10 @@ angular.module('groovly.songstate').factory("SongState", ['$http',
      atEndOfHistory : atEndOfHistory,
      getCurrentID : getCurrentID,
      incrementListenCount : incrementListenCount,
+     updateAEC : updateAEC,
      setLastActionAsNext : setLastActionAsNext,
      setLastActionAsPrevious : setLastActionAsPrevious,
+     getLastAction : getLastAction,
      reachedEndOfStream	: reachedEndOfStream     
    }
 }]);
